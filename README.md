@@ -8,6 +8,9 @@ as a case study in what happens when the data run out.
 
 ![Depth control](figures/fig2_depth_control.png)
 
+> **New to this topic?** [**WORKFLOW.md**](WORKFLOW.md) explains the whole
+> project in plain language with diagrams — no immunology background needed.
+
 ---
 
 ## Why
@@ -153,6 +156,7 @@ R/                      reusable functions
   publicness_null.R     donor rarefaction + permutation null
 scripts/                numbered, run in order
 reports/report.qmd      full write-up
+WORKFLOW.md             plain-language walkthrough with diagrams
 tests/testthat/         147 tests, no network required
 ```
 
