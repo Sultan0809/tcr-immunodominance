@@ -87,13 +87,6 @@ Rscript scripts/07_predicted_epitopes.R# cross-reference predicted epitopes
 Rscript -e 'rmarkdown::render("reports/report.Rmd")'
 ```
 
-Already have an R/bioinformatics conda environment? Only three leaf packages
-are typically missing:
-
-```bash
-conda install -c conda-forge r-stringdist r-testthat r-ggseqlogo
-```
-
 To screen your own epitopes, replace `data/input/epitopes_predicted.csv`
 (columns: `epitope, organism, mhc_class, source_table, position,
 iedb_match_type`) and re-run script 07.
