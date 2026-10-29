@@ -247,5 +247,10 @@ Rscript scripts/05_depth_controlled.R
 Rscript scripts/06_figures.R
 ```
 
-See [README.md](README.md) for results and [reports/report.Rmd](reports/report.Rmd)
-for the full write-up.
+```bash
+Rscript scripts/06_figures.R
+Rscript scripts/07_predicted_epitopes.R
+Rscript -e 'rmarkdown::render("reports/report.Rmd")'
+```
+
+See [README.md](README.md) for results.

@@ -37,13 +37,9 @@ dependencies:
   - r-ggrepel           # non-overlapping point labels (figures)
 
   # --- Reporting -------------------------------------------------------------
-  # The report ships in two forms: reports/report.Rmd needs only rmarkdown +
-  # pandoc (both below), reports/report.qmd needs quarto. Either renders the
-  # same content - quarto is optional.
   - r-rmarkdown
   - r-knitr
   - pandoc
-  - quarto
 
 # NOT INCLUDED, deliberately:
 #
