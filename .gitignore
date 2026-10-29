@@ -1,0 +1,23 @@
+# Raw data is recreated by scripts/01_download_data.R
+data/raw/
+*.zip
+
+# Large intermediates
+data/processed/*.rds
+
+# R
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+renv/library/
+renv/staging/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Quarto
+/.quarto/
+*_files/
+data/processed/vdjdb_human_trb.tsv

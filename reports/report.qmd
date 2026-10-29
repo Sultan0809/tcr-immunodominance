@@ -1,0 +1,250 @@
+---
+title: "Repertoire availability and immunodominance"
+subtitle: "SARS-CoV-2 structural proteins, with HSV-2 glycoprotein D as a data-scarcity case study"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    theme: cosmo
+    fig-width: 9
+    fig-height: 5
+execute:
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| include: false
+library(data.table)
+library(ggplot2)
+
+for (f in c("utils", "diversity", "features", "cdr3_network", "publicness_null")) {
+  source(file.path("..", "R", paste0(f, ".R")))
+}
+
+rp <- function(f) fread(file.path("..", "data", "processed", f),
+                        sep = "\t", na.strings = c("", "NA"))
+
+sars2   <- rp("sars2_trb.tsv")
+hsv2    <- rp("hsv2_trb.tsv")
+depth   <- rp("features_sars2_depth_controlled.tsv")
+feat_h  <- rp("features_hsv2.tsv")
+```
+
+## The question
+
+Epitope prediction for vaccine design is dominated by the MHC side: *will this
+peptide be presented?* The other half of the equation is usually left out — *is
+there a T-cell repertoire available to recognise it?*
+
+Immunodominance is determined on both sides. A peptide presented well but seen
+by few available T-cell clones will not dominate a response. This analysis asks
+whether **repertoire-side properties, computable from public TCR data, track
+how broadly an epitope is recognised**.
+
+The design is deliberately asymmetric. SARS-CoV-2 structural proteins are
+data-rich and used to develop and test the method. HSV-2 glycoprotein D is a
+leading genital herpes vaccine target that is data-poor, and serves as a
+realistic test of whether the approach transfers to a target that matters.
+
+## Data
+
+```{r data-summary}
+summ <- data.table(
+  Quantity = c("Human TRB records (after exclusions)",
+               "Distinct epitopes",
+               "Donors with identifiers",
+               "SARS-CoV-2 structural records",
+               "SARS-CoV-2 structural epitopes",
+               "Analysable epitopes",
+               "HSV-2 records",
+               "HSV-2 gD epitopes"),
+  Value = c("228,349", "3,123", "1,645",
+            format(nrow(sars2[structural == TRUE]), big.mark = ","),
+            uniqueN(sars2[structural == TRUE]$epitope),
+            nrow(depth),
+            nrow(hsv2),
+            nrow(feat_h[protein == "gD"]))
+)
+knitr::kable(summ)
+```
+
+VDJdb's per-study chunk files are read directly rather than the assembled
+table. The chunks carry donor identifiers as real columns, pair alpha and beta
+chains, and expose verified non-binders.
+
+### Two exclusions that change the answer
+
+**In vitro display.** 36,795 records against a single epitope came from phage
+display. These are engineered sequences, not T cells from any person, and carry
+no information about recombination frequency or donor sharing. One such
+experiment outweighs every genuine repertoire in the dataset, so they are
+excluded from all repertoire analysis.
+
+**Record counts are not response magnitude.** `LLLDRLNQL` has 1,753 records
+from 3 donors; `TFEYVSQPFLMDLE` has 2,220 from 70. Record counts measure study
+effort. **Donor count is used as the breadth proxy throughout.**
+
+## Exact-match publicness fails
+
+A public TCR — one found in many unrelated people — is easy to generate and
+commonly selected, making publicness a natural proxy for repertoire
+availability. Measured by exact CDR3 match, it is close to zero everywhere.
+
+```{r exact-publicness}
+knitr::kable(
+  depth[order(-n_donors)][1:8, .(
+    Epitope = epitope, Protein = protein, Donors = n_donors,
+    `Unique CDR3` = n_cdr3,
+    `Exact public fraction` = round(public_fraction, 4),
+    `Mean donors per CDR3` = round(mean_donors_per_cdr3, 3)
+  )]
+)
+```
+
+The mean number of donors per unique CDR3 is 1.0–1.17 throughout. This is not
+evidence that these repertoires are private: people responding to one epitope
+converge on shared **motifs** rather than identical sequences, and each donor
+contributes few records, so exact matches are rare by construction.
+
+Measuring sharing over clusters of similar CDR3s instead raises the median
+public fraction from 0.007 (exact) to 0.018 (edit distance ≤ 1) and 0.044
+(≤ 2). Clustering is not a refinement here — it is what makes publicness
+measurable at all.
+
+## Publicness rises with donor count for free
+
+Publicness counts sequences seen in at least two donors. With 81 donors there
+are 3,240 donor pairs a sequence could be shared across; with 3 donors there
+are 3. **Publicness therefore rises with donor count for combinatorial
+reasons**, and correlating it against donor count is close to correlating a
+variable with itself.
+
+Two independent controls are applied:
+
+- **Donor rarefaction** — recompute publicness using a fixed number of donors,
+  sampled repeatedly, so every epitope is measured at the same depth.
+- **Permutation null** — shuffle donor labels, holding donor count, sequence
+  count and per-donor records fixed, after deduplicating to one row per
+  (CDR3, donor). Without that deduplication a donor who contributed one
+  sequence many times dominates the shuffle and manufactures sharing that was
+  never observed.
+
+```{r correlations}
+cors <- data.table(
+  Measure = c("Exact publicness", "Cluster publicness",
+              "Rarefied to 3 donors", "Rarefied to 5 donors",
+              "Permutation z-score"),
+  Control = c("none", "none", "depth-matched", "depth-matched", "depth-free"),
+  rho = c(0.603, 0.658, 0.553, 0.545, 0.333),
+  n   = c(17, 17, 17, 16, 10)
+)
+knitr::kable(cors, digits = 3)
+```
+
+### Result
+
+The association survives depth control. Cluster publicness correlates with
+donor breadth at rho = +0.66 uncontrolled and **+0.55 after rarefying to a
+fixed donor count**, with the permutation z-score agreeing in sign.
+
+Three caveats, stated plainly:
+
+1. **n = 17.** Spearman on this many points is unstable; no p-value is
+   reported, and none should be.
+2. **HLA is uncontrolled.** These epitopes span A\*01, A\*02, A\*03, A\*24,
+   B\*07, B\*15, B\*35, B\*40, C\*12 and DPA1. HLA is itself a determinant of
+   dominance, and the sample is too small to stratify.
+3. **Donor count is a proxy for breadth, not a measurement of it.** It is still
+   partly a function of which cohorts happened to be studied.
+
+This is an association consistent with the hypothesis, not a test of it.
+
+## No repertoire is more convergent than chance
+
+```{r convergence}
+knitr::kable(
+  depth[!is.na(public_z)][order(public_z), .(
+    Epitope = epitope, Protein = protein, Donors = n_donors,
+    Observed = round(null_observed, 3),
+    Expected = round(null_mean, 3),
+    z = round(public_z, 2),
+    `Within-donor clusters` = round(within_donor_frac, 2)
+  )]
+)
+```
+
+**No epitope reaches z > 2.** At this sampling depth, cross-donor sharing is
+consistent with the sampling structure alone — a limitation of the data, not a
+biological claim.
+
+Two epitopes are significantly **donor-structured** (z < −2): `TFEYVSQPFLMDLE`
+and `MEVTPSGTWL`, the latter with 75% of its multi-sequence clusters confined
+to one donor. That is clonal expansion inside individuals, not public motif
+sharing — and it is the pattern a naive publicness analysis would misread as
+convergence.
+
+### One epitope needs flagging
+
+`LTDEMIAQY` has 3,582 records but only 276 unique sequences, clonality 0.86 and
+V-gene entropy 0.15 against ~0.9 elsewhere. That is one deeply resampled
+expansion, probably longitudinal sampling of the same clones. It should be
+reported with and without inclusion in any summary statistic.
+
+## HSV-2 glycoprotein D: the transfer test
+
+```{r hsv2}
+knitr::kable(
+  feat_h[order(-n_donors), .(
+    Epitope = epitope, Protein = protein, HLA = mhc_a,
+    TCRs = n_tcr, Donors = n_donors, Studies = n_studies
+  )]
+)
+```
+
+All of HSV-2 contributes 260 TCR records across 9 epitopes. **Glycoprotein D —
+the leading genital herpes vaccine antigen — has exactly one epitope in VDJdb:
+`SLPITVYYA`, HLA-A\*02:01, 4 TCRs, 1 study, no donor identifiers.**
+
+Not one metric developed above is computable for it. Publicness needs multiple
+donors; clustering needs multiple sequences; the permutation null needs both.
+
+This is the finding, not a pipeline failure. The method that works on
+SARS-CoV-2 spike does so because thousands of researchers sequenced that
+repertoire during a pandemic. **Database-driven repertoire-availability
+scoring cannot be applied to the vaccine targets that most need it**, because
+the data exist in proportion to attention already paid, not to clinical
+importance.
+
+The practical implication for vaccine design: ranking candidate epitopes by
+repertoire availability currently requires generating the repertoire data for
+that antigen. The alternative is a model that does not depend on observed TCRs
+at all — generation probability from a recombination model (OLGA/SONIA), which
+is computable for any CDR3 and is the natural next step.
+
+## Limitations
+
+- **β chain only.** VDJdb chunks carry amino-acid CDR3s with no nucleotide
+  column, so convergent recombination cannot be computed, and α/β pairing is
+  not used.
+- **Rarefied richness is uninformative.** 15 of 17 epitopes sit at 29–30 out of
+  a maximum 30: nearly every sampled CDR3 is unique, so the measure has no
+  variance to contribute.
+- **Single-linkage clustering can chain.** `largest_cluster_fraction` is
+  reported as a diagnostic; at edit distance 2, `YLQPRTFLL` reaches 0.44.
+- **Database bias is not fully removable.** Epitopes have records because they
+  were studied, and they were studied partly because they were already thought
+  to be dominant.
+
+## Reproducing
+
+```bash
+conda env create -f environment.yml && conda activate tcr-immuno
+Rscript tests/testthat.R            # 147 tests, fully offline
+Rscript scripts/01_download_data.R
+Rscript scripts/02_parse_vdjdb.R
+Rscript scripts/03_epitope_features.R
+Rscript scripts/04_cdr3_networks.R
+Rscript scripts/05_depth_controlled.R
+```

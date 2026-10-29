@@ -1,0 +1,59 @@
+# environment.yml ------------------------------------------------------------
+# Dedicated conda environment for tcr-immunodominance.
+#
+#   conda env create -f environment.yml
+#   conda activate tcr-immuno
+#
+# WHY A SEPARATE ENVIRONMENT:
+# Adding R to an existing Python transcriptomics env usually works, but conda's
+# R packages and R's own install.packages() compile against different toolchains
+# and can produce hard-to-debug segfaults when mixed. Keeping this project
+# isolated costs ~1.5 GB and saves a bad afternoon. If you would rather add to
+# your existing env, see README section "Using an existing conda environment".
+# -----------------------------------------------------------------------------
+name: tcr-immuno
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  # --- R ---------------------------------------------------------------------
+  - r-base>=4.3
+  - r-data.table
+  - r-dplyr
+  - r-tidyr
+  - r-stringr
+  - r-stringdist        # CDR3 distances (step 3)
+  - r-igraph            # similarity networks (step 3)
+  - r-jsonlite
+  - r-ggplot2
+  - r-patchwork
+  - r-scales
+  - r-here
+  - r-testthat
+  - r-ggseqlogo         # motif logos (step 3)
+  - r-pheatmap          # V/J usage heatmaps (step 3)
+  - r-ggrepel           # non-overlapping point labels (figures)
+
+  # --- Reporting -------------------------------------------------------------
+  # The report ships in two forms: reports/report.Rmd needs only rmarkdown +
+  # pandoc (both below), reports/report.qmd needs quarto. Either renders the
+  # same content - quarto is optional.
+  - r-rmarkdown
+  - r-knitr
+  - pandoc
+  - quarto
+
+# NOT INCLUDED, deliberately:
+#
+#  * immunarch - not on conda-forge. Its diversity/overlap metrics are
+#    implemented natively in R/diversity.R instead, which avoids compiling a
+#    CRAN package against a conda R (the most fragile step in setup).
+#
+#  * olga - predates recent Python releases. Keep it in its own environment and
+#    call its CLI from R with system2():
+#        conda create -n olga -c conda-forge python=3.11 numpy
+#        conda activate olga && pip install olga
+#    It is optional; the pipeline falls back to convergent-recombination and
+#    publicness proxies when olga-compute_pgen is not on PATH.

@@ -1,0 +1,8 @@
+organism	protein	structural	accession	length	header
+SARS-CoV-2	S	TRUE	P0DTC2	1273	sp|P0DTC2|SPIKE_SARS2 Spike glycoprotein OS=Severe acute respiratory syndrome coronavirus 2 OX=2697049 GN=S PE=1 SV=1
+SARS-CoV-2	N	TRUE	P0DTC9	419	sp|P0DTC9|NCAP_SARS2 Nucleoprotein OS=Severe acute respiratory syndrome coronavirus 2 OX=2697049 GN=N PE=1 SV=1
+SARS-CoV-2	M	TRUE	P0DTC5	222	sp|P0DTC5|VME1_SARS2 Membrane protein OS=Severe acute respiratory syndrome coronavirus 2 OX=2697049 GN=M PE=1 SV=1
+SARS-CoV-2	E	TRUE	P0DTC4	75	sp|P0DTC4|VEMP_SARS2 Envelope small membrane protein OS=Severe acute respiratory syndrome coronavirus 2 OX=2697049 GN=E PE=1 SV=1
+SARS-CoV-2	ORF3a	FALSE	P0DTC3	275	sp|P0DTC3|AP3A_SARS2 ORF3a protein OS=Severe acute respiratory syndrome coronavirus 2 OX=2697049 GN=3a PE=1 SV=1
+SARS-CoV-2	ORF1ab	FALSE	P0DTD1	7096	sp|P0DTD1|R1AB_SARS2 Replicase polyprotein 1ab OS=Severe acute respiratory syndrome coronavirus 2 OX=2697049 GN=rep PE=1 SV=1
+HSV-2	gD	TRUE	P03172	393	sp|P03172|GD_HHV23 Envelope glycoprotein D OS=Human herpesvirus 2 (strain 333) OX=10313 GN=gD PE=1 SV=2
