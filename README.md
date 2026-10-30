@@ -8,7 +8,7 @@ externally predicted vaccine epitopes — including HSV-2 glycoprotein D, where
 the data runs out.
 
 📖 **[WORKFLOW.md](WORKFLOW.md)** explains the whole project in plain language
-with diagrams. Start there if the topic is new to you.
+with diagrams. 
 
 ---
 
